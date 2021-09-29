@@ -1,0 +1,40 @@
+---
+- name: install wordpress
+  hosts: prod
+  vars_files:
+    - files/secrets/credentials.yml
+  tasks:
+    - name: Create a network with options
+      docker_network:
+        name: wordpress-network
+        driver: bridge
+        driver_options:
+          subnet: "11.0.0.0/24"
+    - name: Create container MySQL
+      docker_container:
+        name: mysql
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: "root"
+          MYSQL_USER: "toto"
+          MYSQL_PASSWORD: "toto"
+          MYSQL_DATABASE: "wordpress"
+        networks:
+          - name: wordpress-network
+        volumes:
+          - mysqldir:/var/lib/mysql
+    - name: Create container Wordpress
+      docker_container:
+        name: wordpress
+        image: wordpress
+        env:
+          WORDPRESS_DB_HOST: "mysql"
+          WORDPRESS_DB_USER: "toto"
+          WORDPRESS_DB_PASSWORD: "toto"
+          WORDPRESS_DB_NAME: "wordpress"
+        networks:
+          - name: wordpress-network
+        volumes:
+          - "wordpress:/var/www/html"
+        ports:
+          - "80:80"
